@@ -1,0 +1,7 @@
+seaborn
+numpy
+pandas
+sklearn
+jenkspy
+scipy
+z3-solver
