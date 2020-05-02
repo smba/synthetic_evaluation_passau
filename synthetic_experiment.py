@@ -82,5 +82,4 @@ if __name__ == "__main__":
     with open('/home/stefan/results_{}.json'.format(seed), 'w') as fp:
         fp.write(json.dumps(log, indent=2))
 
-	# copy file to scratch
-	os.system("rsync -a --remove-source-files '/home/stefan/results_{}.json' '/media/raid/stefan/synthetic_evaluation_results/results_{}.json'".format(seed, seed))
+    os.system("rsync -a --remove-source-files '/home/stefan/results_{}.json' '/media/raid/stefan/synthetic_evaluation_results/results_{}.json'".format(seed, seed))
