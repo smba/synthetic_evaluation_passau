@@ -60,7 +60,7 @@ if __name__ == "__main__":
     print(learner.get_ground_truth())
 
     for i in range(30):
-        print(i)
+        pass"""print(i)
         if not learner.stop():
             learner.build_likelihoods(sample, threshold=0.01)
             cs = learner.calc_candidate_solution()
@@ -76,7 +76,7 @@ if __name__ == "__main__":
             scores["candidate_solution"] = cs
             iterations.append(scores)
         else:
-            break
+            break"""
 
     log["iterations"] = iterations
 
