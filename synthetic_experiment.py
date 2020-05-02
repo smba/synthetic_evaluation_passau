@@ -79,6 +79,6 @@ if __name__ == "__main__":
 
     log["iterations"] = iterations
 
-    with open('/local/muehlbst/results_{}.json'.format(seed), 'w') as fp:
+    with open('/home/stefan/results_{}.json'.format(seed), 'w') as fp:
         fp.write(json.dumps(log, indent=2))
 
