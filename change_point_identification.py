@@ -442,10 +442,49 @@ def query_configurations(
                 c.append(z3.Extract(optid, optid, target) == opt_sign)
             solver.add(z3.Or(c))
     '''
-    solutions = []
-    solution_vectors = []
-    iterations_count = 0
+    #solutions = []
+    #solution_vectors = []
+    #iterations_count = 0
 
+    # create matrix of configurations
+    if len(configs) == 0:
+        config = [0 for i in range(n_options)]
+        configs.append(config)
+
+    configs = set(tuple(c) for c in configs)
+
+    #configs = set([configs])
+    #print("configs, ", configs)
+    # case 1. exploration: simple distance-based sampling
+
+    if len(set_vary) == 0:#
+        # sample a random distance
+        while len(configs) < max_solutions:
+            z = 0
+            while True:
+                distance = np.random.choice(np.arange(1, n_options - 1))
+                enabled_options = np.random.choice(np.arange(n_options), size=distance, replace=False).tolist()
+                config = tuple([1 if i in enabled_options else 0 for i in range(n_options)])
+                if config not in configs:
+                    configs.add(config)
+                    break
+
+    # case 2. exploitation sampling
+    else:
+        while len(configs) < max_solutions:
+            z = 0
+            while True:
+                distance = np.random.choice(np.arange(1, n_options - 1))
+                enabled_options = list(set(list(range(n_options))) - set(set_vary))
+                enabled_options = np.random.choice(enabled_options, size=int(0.8*len(enabled_options)), replace=False)
+                config = tuple([1 if i in enabled_options else 0 for i in range(n_options)])
+                if config not in configs:
+                    configs.add(config)
+                    break
+    #print(configs)
+    #return list(configs)
+
+    """
     while len(solution_vectors) < max_solutions and iterations_count < 1000:
         #print("query")
 
@@ -484,8 +523,8 @@ def query_configurations(
 
         iterations_count += 1
 
-    return solutions
-
+    return solutions"""
+    return list(configs)
 
 class ChangePointLearner:
 
@@ -516,9 +555,9 @@ class ChangePointLearner:
 
         self.s_commit_explore = 0.9
         self.s_commits_to_configs = 0.95
-        self.s_config_explore = 0.95
+        self.s_config_explore = 1.0 # 1.0 = does not change
 
-        self.n_configs_for_exploration = 20
+        self.n_configs_for_exploration = 75
 
         self.cached_solutions = dict()
         self.cached_solutions_keys = []
@@ -563,7 +602,7 @@ class ChangePointLearner:
 
         return ground_truth_peaks
 
-    def calc_candidate_solution(self, N=3):
+    def calc_candidate_solution(self, N=5):
 
         # shortcut
         n_options = self.synth.n_options
@@ -679,7 +718,7 @@ class ChangePointLearner:
 
         return indices_list
 
-    def exploit_commits(self, N=3):
+    def exploit_commits(self, N=5):
 
         # shortcut
         n_options = self.synth.n_options
@@ -719,14 +758,15 @@ class ChangePointLearner:
                 candidates[candidate["commit"]] = []
             candidates[candidate["commit"]].append(candidate["option"])
 
+        print(candidates.keys())
         for key in candidates:
             options = candidates[key]  # options = candidate[]
             exploit_configs += query_configurations("", existing_configs2, n_options, ignore_vm=True,
                                                     max_solutions=3, set_vary=options)
 
-            inverse_options = list(filter(lambda o: o not in options, np.arange(n_options)))
-            exploit_configs += query_configurations("", existing_configs2, n_options, ignore_vm=True,
-                                                    max_solutions=3, set_vary=inverse_options)
+            #inverse_options = list(filter(lambda o: o not in options, np.arange(n_options)))
+            #exploit_configs += query_configurations("", existing_configs2, n_options, ignore_vm=True,
+            #                                       max_solutions=3, set_vary=inverse_options)
 
         return explore_configs, exploit_configs
 
@@ -828,14 +868,14 @@ class ChangePointLearner:
                 return False
 
 if __name__ == "__main__":
-    synth = Synthesizer(500, 64, 5, 0.25, 0.9, 0.00, 4563)
+    synth = Synthesizer(2000, 16, 3, 0.25, 0.95, 0.00, 298)
 
-    confs = np.vstack(list(map(lambda x: np.array(x), query_configurations("", [], 64, 2, ignore_vm=True, set_vary=[]))))
+    confs = np.vstack(list(map(lambda x: np.array(x), query_configurations("", [], 16, 25, ignore_vm=True, set_vary=[]))))
     print(confs)
 
-    revs = sample_commits(len(confs), 500, 0.05)
+    revs = sample_commits(len(confs), 2000, 0.05)
     sample = construct_sample(confs, revs)
-    learner = ChangePointLearner(synth, m_measurements_per_iteration=1000)
+    learner = ChangePointLearner(synth, m_measurements_per_iteration=5000)
 
     print(synth.changepoints)
 
